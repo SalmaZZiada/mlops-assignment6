@@ -1,0 +1,52 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - "**"
+
+jobs:
+
+  linter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run linter
+        run: |
+          echo "Running linter"
+          pip install flake8
+          flake8 . || exit 1
+
+
+  train:
+    needs: linter
+    runs-on: ubuntu-latest
+
+    if: >
+      needs.linter.result == 'success' &&
+      github.ref == 'refs/heads/main' &&
+      contains(github.event.head_commit.message, '[run-train]')
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run training
+        run: |
+          echo "Training"
+          sleep 10
+
+      - name: Generate error log
+        if: failure()
+        run: echo "Training failed!" > error_logs.txt
+
+      - name: Upload error logs
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: error-logs
+          path: error_logs.txt
+
+      - name: Cleanup resources
+        if: always()
+        run: echo "Cleaning up temporary cloud volumes..."
