@@ -34,7 +34,7 @@ jobs:
       - name: Run training
         run: |
           echo "Training"
-          exit 1
+          sleep 10
 
       - name: Generate error log
         if: failure()
